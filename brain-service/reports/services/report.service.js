@@ -1,5 +1,5 @@
-import connectDB from "@/lib/mongodb.js";
-import Report from "@/models/Report.js";
+import connectDB from "../../../src/lib/mongodb.js";
+import Report from "../../../src/models/Report.js";
 
 const inMemoryReports = [];
 

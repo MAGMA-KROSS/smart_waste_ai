@@ -1,7 +1,7 @@
-import connectDB from "@/lib/mongodb.js";
-import Bin from "@/models/Bin.js";
-import { MOCK_BINS } from "@/lib/mockBins.js";
-import { calculateDistance } from "@/lib/geoUtils.js";
+import connectDB from "../../../src/lib/mongodb.js";
+import Bin from "../../../src/models/Bin.js";
+import { MOCK_BINS } from "../../../src/lib/mockBins.js";
+import { calculateDistance } from "../../../src/lib/geoUtils.js";
 
 export const binService = {
   // Returns bins near a location with mock data fallback

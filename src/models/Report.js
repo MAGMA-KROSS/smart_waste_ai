@@ -29,7 +29,7 @@ const ReportSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["overflow", "damaged", "missing", "blocked", "other"],
+      enum: ["overflow", "overflowing", "damaged", "missing", "blocked", "other"],
       required: true,
     },
 
