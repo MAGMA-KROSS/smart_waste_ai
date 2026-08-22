@@ -6,7 +6,7 @@ import BinCard from "@/components/BinCard";
 import DirectionsModal from "@/components/DirectionsModal";
 import AddBinModal from "@/components/AddBinModal";
 import { MOCK_BINS, INITIAL_USER_LOCATION, WASTE_CATEGORIES } from "@/lib/mockBins";
-import { findNearestBin, calculateDistance, generateBinsAroundLocation, reverseGeocode } from "@/lib/geoUtils";
+import { findNearestBin, calculateDistance, generateBinsAroundLocation, reverseGeocode, fetchWalkingRoute } from "@/lib/geoUtils";
 import {
   Search,
   MapPin,
@@ -25,6 +25,7 @@ import {
   Navigation,
   Crosshair,
   Plus,
+  X,
 } from "lucide-react";
 
 export default function FindBinPage() {
@@ -37,6 +38,11 @@ export default function FindBinPage() {
   const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'available', 'full'
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // Walking Route States
+  const [activeRoute, setActiveRoute] = useState(null);
+  const [isCalculatingRoute, setIsCalculatingRoute] = useState(null); // bin.id or null
+  const [routeError, setRouteError] = useState(null);
+
   const handleAddBin = (newBin) => {
     setBins((prev) => [newBin, ...prev]);
     setSelectedBin(newBin);
@@ -45,15 +51,18 @@ export default function FindBinPage() {
   // Location accuracy & status tracking
   const [locationStatus, setLocationStatus] = useState("idle"); // 'idle' | 'locating' | 'success' | 'error'
   const [accuracyMeters, setAccuracyMeters] = useState(null);
+  const [locationErrorMessage, setLocationErrorMessage] = useState("");
 
   // High-Precision GPS Acquisition Function
   const fetchPreciseLocation = useCallback((autoSelectNearest = false) => {
     if (!navigator.geolocation) {
       setLocationStatus("error");
+      setLocationErrorMessage("Geolocation is not supported by your browser.");
       return;
     }
 
     setLocationStatus("locating");
+    setLocationErrorMessage("");
 
     const gpsOptions = {
       enableHighAccuracy: true, // Forces GPS chip / Wi-Fi hardware precision
@@ -80,6 +89,7 @@ export default function FindBinPage() {
 
         setUserLocation(newLoc);
         setLocationStatus("success");
+        setLocationErrorMessage("");
 
         // Distance to default Sector 62 center
         const distFromSector62 = calculateDistance(lat, lng, INITIAL_USER_LOCATION.lat, INITIAL_USER_LOCATION.lng);
@@ -96,12 +106,24 @@ export default function FindBinPage() {
 
         if (autoSelectNearest) {
           const nearest = findNearestBin(lat, lng, activeBins, activeCategory);
-          if (nearest) setSelectedBin(nearest);
+          if (nearest) {
+            setSelectedBin(nearest);
+            handleCalculateRoute(nearest);
+          }
         }
       },
       (error) => {
         console.warn("High precision GPS error:", error.message);
         setLocationStatus("error");
+        if (error.code === 1) {
+          setLocationErrorMessage("Location permission was denied. Please allow location access in your browser to calculate routes from your current spot.");
+        } else if (error.code === 2) {
+          setLocationErrorMessage("Your position is currently unavailable. Please check your GPS / network connection.");
+        } else if (error.code === 3) {
+          setLocationErrorMessage("Location request timed out. Please try refetching GPS.");
+        } else {
+          setLocationErrorMessage("Unable to detect current GPS location.");
+        }
       },
       gpsOptions
     );
@@ -114,6 +136,45 @@ export default function FindBinPage() {
     }, 0);
     return () => clearTimeout(timer);
   }, [fetchPreciseLocation]);
+
+  // Calculate Walking Route to a selected dustbin
+  const handleCalculateRoute = async (bin, openModal = false) => {
+    if (!bin) return;
+
+    setSelectedBin(bin);
+    setRouteError(null);
+
+    // If user GPS has not succeeded yet, try requesting location
+    if (locationStatus === "error" && !userLocation) {
+      setRouteError("Your current location could not be detected. Please enable location services to get accurate walking directions.");
+      fetchPreciseLocation(false);
+      return;
+    }
+
+    setIsCalculatingRoute(bin.id);
+
+    try {
+      const routeData = await fetchWalkingRoute(userLocation.lat, userLocation.lng, bin.lat, bin.lng);
+      setActiveRoute({
+        ...routeData,
+        destinationBin: bin,
+      });
+      if (openModal) {
+        setDirectionsBin(bin);
+      }
+    } catch (err) {
+      console.error("Route calculation error:", err);
+      setRouteError("Unable to calculate the walking route right now. Please check your connection and try again.");
+    } finally {
+      setIsCalculatingRoute(null);
+    }
+  };
+
+  // Clear active route
+  const handleClearRoute = () => {
+    setActiveRoute(null);
+    setRouteError(null);
+  };
 
   // Filter Bins based on category, status, and search query
   const filteredBins = useMemo(() => {
@@ -144,7 +205,7 @@ export default function FindBinPage() {
   const handleFindNearest = () => {
     const nearest = findNearestBin(userLocation.lat, userLocation.lng, bins, activeCategory);
     if (nearest) {
-      setSelectedBin(nearest);
+      handleCalculateRoute(nearest);
     }
   };
 
@@ -158,6 +219,23 @@ export default function FindBinPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
+        {/* Location Permission Alert if error */}
+        {locationErrorMessage && (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 shadow-xs animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+              <div className="text-xs sm:text-sm font-medium">{locationErrorMessage}</div>
+            </div>
+            <button
+              onClick={() => fetchPreciseLocation(false)}
+              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Crosshair className="h-3.5 w-3.5" />
+              <span>Retry GPS</span>
+            </button>
+          </div>
+        )}
+
         {/* Top Feature Banner & Search Controls */}
         <div className="bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -166,7 +244,7 @@ export default function FindBinPage() {
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>AI-Powered Bin Locator</span>
+                <span>AI-Powered Bin Locator & Pedestrian Routing</span>
               </div>
 
               {/* Precise GPS Status Indicator Badge */}
@@ -185,7 +263,7 @@ export default function FindBinPage() {
               {locationStatus === "error" && (
                 <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-500/20 border border-slate-400/30 text-slate-300 text-xs font-medium">
                   <AlertCircle className="h-3.5 w-3.5 text-slate-400" />
-                  <span>JSS Campus Location</span>
+                  <span>GPS Inactive</span>
                 </div>
               )}
             </div>
@@ -218,7 +296,7 @@ export default function FindBinPage() {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-bold text-sm py-3 px-4 rounded-xl flex items-center justify-center space-x-1.5 shadow-md transition-all"
+                  className="bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-bold text-sm py-3 px-4 rounded-xl flex items-center justify-center space-x-1.5 shadow-md transition-all cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Bin</span>
@@ -226,7 +304,7 @@ export default function FindBinPage() {
 
                 <button
                   onClick={handleFindNearest}
-                  className="bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-3 px-3.5 rounded-xl border border-white/20 flex items-center justify-center space-x-1.5 transition-colors"
+                  className="bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-3 px-3.5 rounded-xl border border-white/20 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
                 >
                   <Compass className="h-4 w-4 text-emerald-400" />
                   <span>Nearest</span>
@@ -234,7 +312,7 @@ export default function FindBinPage() {
 
                 <button
                   onClick={() => fetchPreciseLocation(true)}
-                  className="bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-3 px-3.5 rounded-xl border border-white/20 flex items-center justify-center space-x-1.5 transition-colors"
+                  className="bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-3 px-3.5 rounded-xl border border-white/20 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
                   title="Recalibrate High-Precision GPS"
                 >
                   <Crosshair className={`h-4 w-4 text-emerald-400 ${locationStatus === "locating" ? "animate-spin" : ""}`} />
@@ -260,7 +338,7 @@ export default function FindBinPage() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center space-x-1.5 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center space-x-1.5 cursor-pointer ${
                       isActive
                         ? "bg-emerald-600 text-white shadow-xs"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -277,7 +355,7 @@ export default function FindBinPage() {
               <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-lg">
                 <button
                   onClick={() => setStatusFilter("all")}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
                     statusFilter === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -285,7 +363,7 @@ export default function FindBinPage() {
                 </button>
                 <button
                   onClick={() => setStatusFilter("available")}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
                     statusFilter === "available" ? "bg-emerald-500 text-white shadow-xs" : "text-emerald-700 hover:text-emerald-900"
                   }`}
                 >
@@ -293,7 +371,7 @@ export default function FindBinPage() {
                 </button>
                 <button
                   onClick={() => setStatusFilter("full")}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
                     statusFilter === "full" ? "bg-rose-500 text-white shadow-xs" : "text-rose-700 hover:text-rose-900"
                   }`}
                 >
@@ -304,18 +382,37 @@ export default function FindBinPage() {
           </div>
         </div>
 
+        {/* Route Error Notification */}
+        {routeError && (
+          <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center justify-between text-rose-800 text-xs sm:text-sm animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+              <span>{routeError}</span>
+            </div>
+            <button
+              onClick={() => setRouteError(null)}
+              className="text-rose-600 hover:underline font-bold text-xs cursor-pointer ml-3"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Main Grid: List Sidebar + Interactive Map */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
           {/* Bin Cards Sidebar */}
           <div className="lg:col-span-5 space-y-4 max-h-[700px] overflow-y-auto pr-1">
             <div className="flex items-center justify-between text-xs font-medium text-slate-500 px-1">
               <span>Showing {filteredBins.length} nearby dustbins</span>
-              {selectedBin && (
+              {(selectedBin || activeRoute) && (
                 <button
-                  onClick={() => setSelectedBin(null)}
-                  className="text-emerald-600 hover:underline font-semibold"
+                  onClick={() => {
+                    setSelectedBin(null);
+                    handleClearRoute();
+                  }}
+                  className="text-emerald-600 hover:underline font-bold cursor-pointer"
                 >
-                  Clear Map Selection
+                  Clear Selection & Route
                 </button>
               )}
             </div>
@@ -335,7 +432,7 @@ export default function FindBinPage() {
                     setStatusFilter("all");
                     setSearchQuery("");
                   }}
-                  className="text-xs bg-emerald-50 text-emerald-700 font-bold px-3 py-2 rounded-lg hover:bg-emerald-100"
+                  className="text-xs bg-emerald-50 text-emerald-700 font-bold px-3 py-2 rounded-lg hover:bg-emerald-100 cursor-pointer"
                 >
                   Reset Filters
                 </button>
@@ -347,15 +444,21 @@ export default function FindBinPage() {
                   bin={bin}
                   userLocation={userLocation}
                   isSelected={selectedBin?.id === bin.id}
-                  onSelect={(b) => setSelectedBin(b)}
-                  onGetDirections={(b) => setDirectionsBin(b)}
+                  isCalculating={isCalculatingRoute === bin.id}
+                  hasActiveRoute={activeRoute?.destinationBin?.id === bin.id}
+                  activeRouteData={activeRoute?.destinationBin?.id === bin.id ? activeRoute : null}
+                  onSelect={(b) => {
+                    setSelectedBin(b);
+                    handleCalculateRoute(b);
+                  }}
+                  onGetDirections={(b) => handleCalculateRoute(b, true)}
                 />
               ))
             )}
           </div>
 
           {/* Leaflet Map Column */}
-          <div className="lg:col-span-7 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs h-[500px] lg:h-[700px] sticky top-20 flex flex-col">
+          <div className="lg:col-span-7 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs h-[520px] lg:h-[700px] sticky top-20 flex flex-col relative">
             <div className="flex items-center justify-between pb-2 px-2 text-xs">
               <div className="flex items-center space-x-2 font-semibold text-slate-700">
                 <Layers className="h-4 w-4 text-emerald-600" />
@@ -374,14 +477,86 @@ export default function FindBinPage() {
               </div>
             </div>
 
+            {/* Map Container */}
             <div className="flex-1 w-full rounded-xl overflow-hidden relative">
               <BinMap
                 bins={filteredBins}
                 selectedBin={selectedBin}
                 userLocation={userLocation}
-                onSelectBin={(bin) => setSelectedBin(bin)}
-                onGetDirections={(bin) => setDirectionsBin(bin)}
+                activeRoute={activeRoute}
+                isCalculatingRoute={Boolean(isCalculatingRoute)}
+                onSelectBin={(bin) => {
+                  setSelectedBin(bin);
+                  handleCalculateRoute(bin);
+                }}
+                onGetDirections={(bin) => handleCalculateRoute(bin, true)}
               />
+
+              {/* Floating Active Route Information Card */}
+              {activeRoute && activeRoute.destinationBin && (
+                <div className="absolute bottom-4 left-4 right-4 z-400 bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/30 animate-in slide-in-from-bottom-4 duration-300">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="bg-emerald-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          Walking Route Active
+                        </span>
+                        <span className="text-slate-300 text-xs font-mono">
+                          {activeRoute.destinationBin.id}
+                        </span>
+                      </div>
+                      <h4 className="font-extrabold text-white text-base mt-1 leading-snug">
+                        {activeRoute.destinationBin.name}
+                      </h4>
+                      <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5 truncate max-w-xs sm:max-w-md">
+                        <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                        <span className="truncate">{activeRoute.destinationBin.address}</span>
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleClearRoute}
+                      className="p-1.5 bg-white/10 hover:bg-white/20 rounded-full text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      title="Close Route"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Route Stats Bar */}
+                  <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-800 text-center">
+                    <div className="bg-white/5 p-2 rounded-xl border border-white/10">
+                      <div className="text-[10px] text-slate-400 uppercase font-bold">Walking Distance</div>
+                      <div className="text-sm font-extrabold text-emerald-300">{activeRoute.distanceText}</div>
+                    </div>
+                    <div className="bg-white/5 p-2 rounded-xl border border-white/10">
+                      <div className="text-[10px] text-slate-400 uppercase font-bold">Est. Walk Time</div>
+                      <div className="text-sm font-extrabold text-white flex items-center justify-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>{activeRoute.durationText}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Route Action Buttons */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => setDirectionsBin(activeRoute.destinationBin)}
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-extrabold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 shadow-md transition-all cursor-pointer"
+                    >
+                      <Navigation className="h-3.5 w-3.5" />
+                      <span>Start Navigation</span>
+                    </button>
+
+                    <button
+                      onClick={() => setDirectionsBin(activeRoute.destinationBin)}
+                      className="bg-white/10 hover:bg-white/20 text-white font-semibold text-xs py-2.5 px-3 rounded-xl border border-white/15 transition-colors cursor-pointer"
+                    >
+                      <span>Steps ({activeRoute.steps ? activeRoute.steps.length : 0})</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -392,6 +567,7 @@ export default function FindBinPage() {
         <DirectionsModal
           bin={directionsBin}
           userLocation={userLocation}
+          routeData={activeRoute?.destinationBin?.id === directionsBin.id ? activeRoute : null}
           onClose={() => setDirectionsBin(null)}
         />
       )}
@@ -407,3 +583,4 @@ export default function FindBinPage() {
     </div>
   );
 }
+

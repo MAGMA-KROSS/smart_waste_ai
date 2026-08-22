@@ -149,3 +149,30 @@ export function getFillStatus(fillLevel) {
     hex: '#10B981',
   };
 }
+
+/**
+ * Calls our walking route service to get the shortest practical pedestrian path
+ */
+export async function fetchWalkingRoute(originLat, originLng, destLat, destLng) {
+  try {
+    const url = `/api/route/walking?originLat=${originLat}&originLng=${originLng}&destLat=${destLat}&destLng=${destLng}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `Route calculation failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("fetchWalkingRoute error:", err);
+    throw err;
+  }
+}
+
+/**
+ * Builds external navigation links (Google Maps walking mode)
+ */
+export function getNavigationUrl(originLat, originLng, destLat, destLng, label = "Dustbin") {
+  return `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=walking`;
+}
+
