@@ -1,6 +1,6 @@
-import connectDB from "@/lib/mongodb.js";
-import User from "@/models/User.js";
-import Worker from "@/models/Worker.js";
+import connectDB from "../../../src/lib/mongodb.js";
+import User from "../../../src/models/User.js";
+import Worker from "../../../src/models/Worker.js";
 
 export const workerService = {
   // Returns all municipal workers for admin management

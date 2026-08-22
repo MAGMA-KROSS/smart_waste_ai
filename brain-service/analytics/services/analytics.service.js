@@ -1,9 +1,10 @@
-import connectDB from "@/lib/mongodb.js";
-import Bin from "@/models/Bin.js";
-import Report from "@/models/Report.js";
-import Route from "@/models/Route.js";
-import User from "@/models/User.js";
-import { MOCK_BINS } from "@/lib/mockBins.js";
+import connectDB from "../../../src/lib/mongodb.js";
+import Bin from "../../../src/models/Bin.js";
+import Report from "../../../src/models/Report.js";
+import Worker from "../../../src/models/Worker.js";
+import User from "../../../src/models/User.js";
+import Route from "../../../src/models/Route.js";
+import { MOCK_BINS } from "../../../src/lib/mockBins.js";
 
 export const analyticsService = {
   // Returns summary metrics for municipal command dashboard

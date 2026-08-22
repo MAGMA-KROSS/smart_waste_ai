@@ -56,36 +56,29 @@ inMemoryUsers.set("praveen.iyu@gmail.com", {
   createdAt: new Date(),
 });
 
+const rajHash = bcrypt.hashSync("rajyadav123", SALT_ROUNDS);
+inMemoryUsers.set("ry7437901@gmail.com", {
+  _id: "raj_user_id_123",
+  name: "raj yadav ji",
+  email: "ry7437901@gmail.com",
+  passwordHash: rajHash,
+  role: "citizen",
+  isActive: true,
+  createdAt: new Date(),
+});
+
 export const authService = {
   // Registers a new citizen (always role="citizen")
   async register({ name, email, password }) {
     const cleanEmail = email.toLowerCase().trim();
-    const conn = await connectDB();
-
-    if (conn) {
-      const existing = await User.findOne({ email: cleanEmail });
-      if (existing) {
-        throw Object.assign(new Error("Email already registered"), { code: "EMAIL_EXISTS" });
-      }
-
-      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-      const user = await User.create({
-        name: name.trim(),
-        email: cleanEmail,
-        passwordHash,
-        role: "citizen",
-        isActive: true,
-        lastLoginAt: new Date(),
-      });
-
-      return sanitizeUser(user);
-    }
 
     if (inMemoryUsers.has(cleanEmail)) {
-      throw Object.assign(new Error("Email already registered"), { code: "EMAIL_EXISTS" });
+      throw Object.assign(new Error("An account with this email already exists"), { code: "EMAIL_EXISTS" });
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Save to fallback map as well to guarantee login succeeds in all environments
     const mockUser = {
       _id: `user_mem_${Date.now()}`,
       name: name.trim(),
@@ -95,28 +88,60 @@ export const authService = {
       isActive: true,
       createdAt: new Date(),
     };
+
+    let userObj = sanitizeUser(mockUser);
+
+    try {
+      const conn = await connectDB();
+      if (conn) {
+        const existing = await User.findOne({ email: cleanEmail });
+        if (existing) {
+          throw Object.assign(new Error("An account with this email already exists"), { code: "EMAIL_EXISTS" });
+        }
+
+        const createdUser = await User.create({
+          name: name.trim(),
+          email: cleanEmail,
+          passwordHash,
+          role: "citizen",
+          isActive: true,
+          lastLoginAt: new Date(),
+        });
+
+        userObj = sanitizeUser(createdUser);
+        mockUser._id = createdUser._id.toString();
+      }
+    } catch (err) {
+      if (err.code === "EMAIL_EXISTS") throw err;
+      console.warn("MongoDB Atlas registration notice:", err.message);
+    }
+
     inMemoryUsers.set(cleanEmail, mockUser);
-    return sanitizeUser(mockUser);
+    return userObj;
   },
 
   // Authenticates user with email and password
   async login({ email, password }) {
     const cleanEmail = email.toLowerCase().trim();
-    const conn = await connectDB();
 
-    if (conn) {
-      const user = await User.findOne({ email: cleanEmail }).select("+passwordHash");
-      if (user) {
-        if (!user.isActive) {
-          throw Object.assign(new Error("Account is deactivated"), { code: "ACCOUNT_INACTIVE" });
-        }
+    try {
+      const conn = await connectDB();
+      if (conn) {
+        const user = await User.findOne({ email: cleanEmail }).select("+passwordHash");
+        if (user) {
+          if (!user.isActive) {
+            throw Object.assign(new Error("Account is deactivated"), { code: "ACCOUNT_INACTIVE" });
+          }
 
-        const isValid = await bcrypt.compare(password, user.passwordHash);
-        if (isValid) {
-          await User.findByIdAndUpdate(user._id, { lastLoginAt: new Date() });
-          return sanitizeUser(user);
+          const isValid = await bcrypt.compare(password, user.passwordHash);
+          if (isValid) {
+            await User.findByIdAndUpdate(user._id, { lastLoginAt: new Date() });
+            return sanitizeUser(user);
+          }
         }
       }
+    } catch (err) {
+      console.warn("MongoDB Atlas login notice:", err.message);
     }
 
     // Fallback to seeded in-memory store
@@ -140,11 +165,14 @@ export const authService = {
 
   // Returns profile for authenticated user
   async getMe(userId) {
-    const conn = await connectDB();
-
-    if (conn) {
-      const user = await User.findById(userId).select("-passwordHash");
-      if (user) return user;
+    try {
+      const conn = await connectDB();
+      if (conn) {
+        const user = await User.findById(userId).select("-passwordHash");
+        if (user) return user;
+      }
+    } catch (err) {
+      console.warn("MongoDB Atlas getMe notice:", err.message);
     }
 
     for (const u of inMemoryUsers.values()) {
@@ -157,37 +185,8 @@ export const authService = {
   // Creates a worker account (admin only, role="worker")
   async createWorker({ name, email, employeeId, department, temporaryPassword }) {
     const cleanEmail = email.toLowerCase().trim();
-    const conn = await connectDB();
     const password = temporaryPassword || generateTempPassword();
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    if (conn) {
-      const existing = await User.findOne({ email: cleanEmail });
-      if (existing) {
-        throw Object.assign(new Error("Email already registered"), { code: "EMAIL_EXISTS" });
-      }
-
-      const user = await User.create({
-        name: name.trim(),
-        email: cleanEmail,
-        passwordHash,
-        role: "worker",
-        isActive: true,
-      });
-
-      const workerProfile = await Worker.create({
-        userId: user._id,
-        employeeId,
-        department: department || "Waste Collection",
-        status: "active",
-      });
-
-      return { user: sanitizeUser(user), workerProfile, temporaryPassword: password };
-    }
-
-    if (inMemoryUsers.has(cleanEmail)) {
-      throw Object.assign(new Error("Email already registered"), { code: "EMAIL_EXISTS" });
-    }
 
     const mockWorker = {
       _id: `worker_mem_${Date.now()}`,
@@ -198,16 +197,48 @@ export const authService = {
       isActive: true,
       createdAt: new Date(),
     };
-    inMemoryUsers.set(cleanEmail, mockWorker);
 
-    const mockProfile = {
+    let userObj = sanitizeUser(mockWorker);
+    let workerProfile = {
       userId: mockWorker._id,
       employeeId,
       department: department || "Waste Collection",
       status: "active",
     };
 
-    return { user: sanitizeUser(mockWorker), workerProfile: mockProfile, temporaryPassword: password };
+    try {
+      const conn = await connectDB();
+      if (conn) {
+        const existing = await User.findOne({ email: cleanEmail });
+        if (existing) {
+          throw Object.assign(new Error("An account with this email already exists"), { code: "EMAIL_EXISTS" });
+        }
+
+        const user = await User.create({
+          name: name.trim(),
+          email: cleanEmail,
+          passwordHash,
+          role: "worker",
+          isActive: true,
+        });
+
+        workerProfile = await Worker.create({
+          userId: user._id,
+          employeeId,
+          department: department || "Waste Collection",
+          status: "active",
+        });
+
+        userObj = sanitizeUser(user);
+        mockWorker._id = user._id.toString();
+      }
+    } catch (err) {
+      if (err.code === "EMAIL_EXISTS") throw err;
+      console.warn("MongoDB Atlas createWorker notice:", err.message);
+    }
+
+    inMemoryUsers.set(cleanEmail, mockWorker);
+    return { user: userObj, workerProfile, temporaryPassword: password };
   },
 };
 

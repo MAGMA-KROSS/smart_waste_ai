@@ -1,18 +1,15 @@
 "use client";
 /**
  * src/app/citizen/register/page.js
- * Citizen-only registration.
- * Design preserved from original signup.js (blue-gray theme).
- * Municipal Staff toggle REMOVED — public registration ALWAYS creates "citizen".
+ * Citizen-only registration page.
+ * Uses window.location.href to guarantee clean navigation with set-cookie header.
  */
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -57,20 +54,20 @@ export default function RegisterPage() {
           name: formData.fullName,
           email: formData.email,
           password: formData.password,
-          // NOTE: role is NOT sent — backend always assigns "citizen"
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         setError(data.error || "Registration failed. Please try again.");
         return;
       }
 
-      // Always citizen — redirect to citizen dashboard
-      router.push("/citizen/dashboard");
-    } catch {
+      // Hard redirect to dashboard so browser attaches the set-cookie swai_token header cleanly
+      window.location.href = "/citizen/dashboard";
+    } catch (err) {
+      console.error("Register form submission error:", err);
       setError("Network error. Please check your connection.");
     } finally {
       setLoading(false);
@@ -99,173 +96,149 @@ export default function RegisterPage() {
           </p>
 
           {error && (
-            <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-3">
-              {/* FULL NAME */}
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-semibold text-[#121c2a] mb-1.5">Full Name</label>
+              <input
+                type="text"
+                name="fullName"
+                required
+                placeholder="e.g. Raj Yadav"
+                value={formData.fullName}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-[#f8f9ff] border border-[#cfd5e5] rounded-xl text-sm focus:outline-none focus:border-emerald-600 transition"
+              />
+            </div>
+
+            {/* Email Address */}
+            <div>
+              <label className="block text-sm font-semibold text-[#121c2a] mb-1.5">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="name@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-[#f8f9ff] border border-[#cfd5e5] rounded-xl text-sm focus:outline-none focus:border-emerald-600 transition"
+              />
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label className="block text-sm font-semibold text-[#121c2a] mb-1.5">
+                Phone Number <span className="text-xs font-normal text-slate-400">(Optional)</span>
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                placeholder="e.g. 9876543210"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-[#f8f9ff] border border-[#cfd5e5] rounded-xl text-sm focus:outline-none focus:border-emerald-600 transition"
+              />
+            </div>
+
+            {/* Password Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-semibold mb-1">
-                  Full Name
-                </label>
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  required
-                  className="w-full h-11 px-3 border border-[#bec9c2] rounded-md bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-                />
-              </div>
-
-              {/* EMAIL */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold mb-1">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full h-11 px-3 border border-[#bec9c2] rounded-md bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-                />
-              </div>
-
-              {/* PHONE */}
-              <div>
-                <label htmlFor="phone" className="block text-sm font-semibold mb-1">
-                  Phone Number{" "}
-                  <span className="text-gray-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full h-11 px-3 border border-[#bec9c2] rounded-md bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-                />
-              </div>
-
-              {/* PASSWORD + CONFIRM */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="password" className="block text-sm font-semibold mb-1">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      className="w-full h-11 px-3 pr-10 border border-[#bec9c2] rounded-md bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-semibold mb-1">
-                    Confirm Password
-                  </label>
+                <label className="block text-sm font-semibold text-[#121c2a] mb-1.5">Password</label>
+                <div className="relative">
                   <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
+                    type={showPassword ? "text" : "password"}
+                    name="password"
                     required
-                    className="w-full h-11 px-3 border border-[#bec9c2] rounded-md bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    placeholder="Min 6 characters"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-[#f8f9ff] border border-[#cfd5e5] rounded-xl text-sm focus:outline-none focus:border-emerald-600 transition pr-10"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#121c2a] mb-1.5">Confirm Password</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  required
+                  placeholder="Re-enter password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-[#f8f9ff] border border-[#cfd5e5] rounded-xl text-sm focus:outline-none focus:border-emerald-600 transition"
+                />
               </div>
             </div>
 
-            {/* TERMS */}
-            <div className="flex items-start gap-2">
+            {/* Terms Checkbox */}
+            <div className="flex items-center space-x-2 pt-1">
               <input
+                type="checkbox"
                 id="terms"
                 name="terms"
-                type="checkbox"
                 checked={formData.terms}
                 onChange={handleChange}
-                required
-                className="mt-1 h-4 w-4 accent-emerald-700"
+                className="h-4 w-4 text-emerald-700 focus:ring-emerald-500 border-slate-300 rounded cursor-pointer"
               />
-              <label htmlFor="terms" className="text-sm text-[#3f4944]">
-                I agree to the{" "}
-                <a href="#" className="text-emerald-700 hover:underline">Terms of Service</a>
-                {" "}and{" "}
-                <a href="#" className="text-emerald-700 hover:underline">Privacy Policy</a>.
+              <label htmlFor="terms" className="text-xs text-slate-600">
+                I agree to the <span className="text-emerald-700 underline font-medium cursor-pointer">Terms of Service</span> and{" "}
+                <span className="text-emerald-700 underline font-medium cursor-pointer">Privacy Policy</span>.
               </label>
             </div>
 
-            {/* SUBMIT */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 flex justify-center items-center bg-[#065f46] hover:bg-[#00462f] disabled:opacity-60 text-white font-semibold rounded-md transition shadow-sm gap-2"
+              className="w-full py-3.5 bg-[#004532] hover:bg-[#003425] text-white font-semibold rounded-xl transition shadow-md flex items-center justify-center space-x-2 text-base cursor-pointer"
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating Account...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Creating Account...</span>
                 </>
               ) : (
-                "Create Citizen Account"
+                <span>Create Citizen Account</span>
               )}
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-[#3f4944]">
-              Already have an account?{" "}
-              <Link href="/citizen/login" className="font-semibold text-[#065f46] hover:underline ml-1">
-                Sign In
-              </Link>
-            </p>
-          </div>
+          {/* Already have an account */}
+          <p className="mt-8 text-center text-sm text-[#3f4944]">
+            Already registered?{" "}
+            <Link href="/citizen/login" className="text-[#004532] font-semibold hover:underline">
+              Sign In Here
+            </Link>
+          </p>
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="hidden lg:block lg:w-[40%] relative overflow-hidden bg-[#d9e3f6]">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBHK98I-YSSLOx85Nl_gmJe4r4b0jQhY9pmwXl1JLaPceghWy7YYiQ48qh_yNTQarJyN2qHL18X7B5z7AhQz-J3n9dnu_9QA1z_hn9aitDbvy4yvRfQHciXQCz6-MRjUqOLaSTde9URJKz0ycZBpMKoRoH0sc4FbTpaw8-Y5wQxf0nDCBNJOpeku1mRoWNMl4FgshVAl-180Z_kSlpcBM5p5Jo3S_mwFFq_LVxLVuPvucWnoS2r5XHh')",
-          }}
-        />
-        <div className="absolute inset-0 bg-[#004532]/10 backdrop-blur-[2px]" />
-        <div className="absolute bottom-10 left-10 right-10">
-          <div className="bg-white/80 backdrop-blur-md p-6 rounded-xl border border-white/20 shadow-lg">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-                <span className="text-xl text-emerald-700">🔗</span>
-              </div>
-              <h3 className="text-xl font-semibold text-[#121c2a]">Intelligent Logistics</h3>
-            </div>
-            <p className="text-sm text-[#3f4944] leading-relaxed">
-              Join thousands of citizens contributing to data-driven, sustainable waste management.
-            </p>
-          </div>
+      {/* RIGHT SIDE SHOWCASE */}
+      <div className="hidden lg:flex lg:w-[40%] bg-emerald-900 relative overflow-hidden flex-col justify-between p-12 text-white">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 opacity-90"></div>
+        <div className="relative z-10 space-y-4">
+          <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-xs font-semibold text-emerald-300 uppercase tracking-wider">
+            Smart City Initiative
+          </span>
+          <h2 className="text-3xl font-extrabold leading-tight">
+            Clean Cities Start With Responsible Citizens
+          </h2>
+          <p className="text-emerald-100/80 text-sm">
+            Join thousands of citizens using SmartWaste AI to locate nearby dustbins, segregate waste streams, and report overflowing bins in real-time.
+          </p>
         </div>
       </div>
     </div>
