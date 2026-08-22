@@ -148,7 +148,7 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-8">
-            <a href="#" className="text-sm font-medium text-brand-charcoal hover:text-brand-primary transition-colors">Home</a>
+            <a href="/home" className="text-sm font-medium text-brand-charcoal hover:text-brand-primary transition-colors">Home</a>
             <a href="/citizen/find-bin" className="text-sm font-semibold text-brand-primary transition-colors">Find a Bin</a>
             <a href="#ai-scanner" className="text-sm font-medium text-brand-slate hover:text-brand-primary transition-colors">AI Scanner</a>
             <a href="#how-it-works" className="text-sm font-medium text-brand-slate hover:text-brand-primary transition-colors">How It Works</a>
@@ -156,8 +156,8 @@ const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <a href="#" className="text-sm font-medium text-brand-slate hover:text-brand-charcoal transition-colors">Login</a>
-            <a href="#get-started" className="bg-brand-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-black transition-colors shadow-md">
+            <a href="/citizen/login" className="text-sm font-medium text-brand-slate hover:text-brand-charcoal transition-colors">Login</a>
+            <a href="/citizen/register" className="bg-brand-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-black transition-colors shadow-md">
               Get Started
             </a>
           </div>
@@ -180,8 +180,8 @@ const Navbar = () => {
             <a href="#ai-scanner" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">AI Scanner</a>
             <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">How It Works</a>
             <div className="pt-4 flex flex-col space-y-3">
-              <a href="#" className="block w-full text-center px-4 py-3 border border-gray-300 rounded-lg text-brand-charcoal font-medium hover:bg-gray-50">Login</a>
-              <a href="#get-started" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center px-4 py-3 bg-brand-dark text-white rounded-lg font-medium hover:bg-black">Get Started</a>
+              <a href="/citizen/login" onClick ={() => setIsMobileMenuOpen(false)}className="block w-full text-center px-4 py-3 border border-gray-300 rounded-lg text-brand-charcoal font-medium hover:bg-gray-50">Login</a>
+              <a href="/citizen/register" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center px-4 py-3 bg-brand-dark text-white rounded-lg font-medium hover:bg-black">Get Started</a>
             </div>
           </div>
         </div>
@@ -887,7 +887,7 @@ const CTASection = () => (
       </p>
       
       <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-        <a href="#find-bin" className="bg-brand-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-brand-secondary transition-all shadow-lg hover:-translate-y-1">
+        <a href="#/find-bin" className="bg-brand-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-brand-secondary transition-all shadow-lg hover:-translate-y-1">
           Find a Nearby Bin
         </a>
         <a href="#ai-scanner" className="bg-white/10 text-white border border-white/20 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all backdrop-blur-sm hover:-translate-y-1">

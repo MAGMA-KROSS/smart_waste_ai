@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@auth/*": ["./auth-service/*"],
+      "@ai/*": ["./ai-llm-service/*"],
+      "@brain/*": ["./brain-service/*"]
     }
   }
 }
