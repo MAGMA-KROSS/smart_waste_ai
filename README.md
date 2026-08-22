@@ -1,150 +1,93 @@
-# ♻️ SmartWaste AI — Official Architecture & RBAC Specification
+# ♻️ SmartWaste AI — Intelligent Civic Waste Management Platform
 
-> **"Don't throw it. Find it, scan it, recycle it."**  
-> *An AI-assisted, microservice-structured civic tech ecosystem connecting citizens, municipal authorities, and waste-collection workers into a unified intelligent recycling network.*
+Welcome to **SmartWaste AI**, a modern, AI-powered smart civic technology platform connecting citizens, municipal authorities, and waste-collection workers into a unified, intelligent recycling ecosystem.
 
 ---
 
-## 🏗️ Architecture Overview & Gist
+## 📚 Master Documentation Directory
 
-SmartWaste AI is built using a **Domain-Oriented 3-Microservice Architecture** powered by Next.js 16 App Router, Node.js ESM, MongoDB Atlas, and JWT authentication:
+All comprehensive architectural, security, and frontend documentation files are located directly in the root directory:
 
-```
-smart_waste_ai/
-│
-├── 🔐 auth-service/        # SERVICE 1: Centralized Auth & RBAC Microservice
-│   ├── controllers/       # Auth request handlers (login, register, me, createWorker)
-│   ├── middleware/        # JWT authentication & role-authorization guards
-│   ├── services/          # Business logic & bcryptjs password hashing
-│   ├── utils/             # Jose JWT sign & verify + HttpOnly cookie management
-│   └── validators/        # Input validation & server-side role overrides
-│
-├── 🤖 ai-llm-service/      # SERVICE 2: Isolated AI/LLM Service (AI Module Stub)
-│   ├── controllers/       # Waste item scan & upcycling recommendation endpoints
-│   ├── services/          # AI classification logic stub
-│   ├── validators/        # Input payload validation
-│   └── README.md          # Integration guide for AI team member
-│
-├── 🧠 brain-service/       # SERVICE 3: Main Core Workflow Service
-│   ├── admin/             # Municipal Command Center & high-level workflows
-│   ├── workers/           # Worker profile tracking & route status
-│   ├── bins/              # Smart bin CRUD, geospatial queries & mock fallbacks
-│   ├── reports/           # Citizen & worker issue reporting engine
-│   ├── routes/            # Greedy nearest-neighbor AI route optimization
-│   └── analytics/         # System metrics & city-wide analytics
-│
-├── src/                    # Frontend Pages & Gateway API Routes
-│   ├── app/               # App Router (/citizen, /worker, /admin, /api)
-│   ├── components/        # UI components (BinMap, AddBinModal, ReportModal)
-│   ├── models/            # Database Schemas (User, Worker, Admin, Bin, Report, Route)
-│   └── middleware.js      # Next.js Edge Route Protection (jose)
-│
-├── docs/                   # Architecture, API & Security Documentation
-├── scripts/                # Administrative & Seed Scripts
-├── .env.local              # MongoDB Atlas URI & JWT Secrets
-├── credentials.md          # Official Credentials Specification
-└── package.json            # Dependencies & Webpack Build Config
+| Document | Topic | Description |
+|---|---|---|
+| 🔐 **[`README-AUTH.md`](README-AUTH.md)** | **Authentication & Security** | `jose` JWTs, `bcryptjs` password cryptography, `HttpOnly` security cookies, server-enforced RBAC, and Edge route protection middleware (`src/middleware.js`). |
+| 🧠 **[`README-BRAIN.md`](README-BRAIN.md)** | **Brain Core Microservice** | 6 domain sub-services (`admin`, `workers`, `bins`, `reports`, `routes`, `analytics`), greedy nearest-neighbor AI route optimization algorithm, geospatial queries, and MongoDB Atlas schemas. |
+| 💻 **[`README-SRC.md`](README-SRC.md)** | **Frontend & API Gateway** | Next.js 16 App Router portals (Citizen, Worker, Admin), Leaflet OpenStreetMap interactive GPS map with polyline routing, and API gateway handlers (`src/app/api/`). |
+
+---
+
+## 🏛️ Architecture Overview
+
+```mermaid
+graph TD
+    Client[Client Browser / User Portals] --> Gateway[Next.js App Router API Gateway /src/app/api/*]
+    
+    subgraph Microservices Architecture
+        Gateway --> AuthSvc[🔐 Authentication Microservice /auth-service]
+        Gateway --> BrainSvc[🧠 Brain Core Microservice /brain-service]
+        Gateway --> AISvc[🤖 AI / LLM Microservice /ai-llm-service]
+    end
+
+    subgraph Data & Storage Layer
+        AuthSvc --> MongoDB[(MongoDB Atlas Cloud DB)]
+        BrainSvc --> MongoDB
+    end
 ```
 
 ---
 
-## 🔒 Authentication & Role-Based Access Control (RBAC)
+## 🚀 Quick Start & Installation
 
-Authentication is handled via **signed JSON Web Tokens (`jose`)** stored in `HttpOnly` cookies (`swai_token`) with standard 7-day expiration.
+### 1. Prerequisites
+- **Node.js**: `v18.x` or `v20.x`
+- **npm**: `v9.x` or `v10.x`
+- **MongoDB Atlas**: Active cluster connection string
 
-### 👥 Role Classification Matrix
-
-| Feature / Capability | 👤 Citizen | 🚚 Worker | 🏛️ Admin |
-|---|:---:|:---:|:---:|
-| **Public Self-Registration** | ✅ Yes (`/citizen/register`) | ❌ Server-only | ❌ Seed-only |
-| **Login Access** | ✅ Yes (`/citizen/login`) | ✅ Yes (`/citizen/login`) | ✅ Yes (`/citizen/login`) |
-| **Landing Portal** | `/citizen/dashboard` | `/worker` | `/admin` |
-| **Interactive Leaflet Map** | ✅ Yes (`/citizen/find-bin`) | ✅ View-only | ✅ Yes |
-| **Add Dustbin to Atlas DB** | ✅ Yes (Suggested) | ❌ No | ✅ Yes (Full CRUD) |
-| **Report Bin Problem** | ✅ Yes (`POST /api/reports`) | ✅ Yes (`POST /api/worker/report`) | ✅ View/Resolve all |
-| **View Assigned Pickup Route** | ❌ No | ✅ Yes (`GET /api/worker/route`) | ✅ View all routes |
-| **Mark Bin Collected** | ❌ No | ✅ Yes (`PATCH /api/worker/bins/:id/collect`) | ✅ Reset levels |
-| **Generate AI Route** | ❌ No | ❌ No | ✅ Yes (`POST /api/admin/routes/generate`) |
-| **Assign Route to Worker** | ❌ No | ❌ No | ✅ Yes (`POST /api/admin/routes/:id/assign`) |
-| **Create Worker Account** | ❌ No | ❌ No | ✅ Yes (`POST /api/admin/workers`) |
-
----
-
-## 🔐 Database Authentication & Security Mechanics
-
-1. **Server-Enforced Registration**:
-   - Public registration (`POST /api/auth/register`) **ALWAYS forces `role = "citizen"`**.
-   - If a client attempts to pass `"role": "admin"` in the JSON payload, the server validator strips the field.
-
-2. **Protected Route Middleware (`src/middleware.js`)**:
-   - `/admin/*` requires valid JWT with `role === "admin"`. Unauthorized requests return **HTTP 403 Forbidden**.
-   - `/worker/*` requires valid JWT with `role === "worker"`. Unauthorized requests return **HTTP 403 Forbidden**.
-   - `/citizen/dashboard` requires valid JWT token. Unauthenticated users return **HTTP 401 Unauthorized**.
-
-3. **MongoDB Atlas Collections (`smart_waste_ai`)**:
-   - `users`: Stores user credentials (`email`, `passwordHash`, `role`, `name`, `isActive`).
-   - `workers`: Stores worker operational details (`userId`, `employeeId`, `department`, `status`).
-   - `admins`: Stores municipal admin profiles (`userId`, `department`, `permissions`).
-   - `bins`: Stores smart bin documents (`binId`, `lat`, `lng`, `fillLevel`, `category`, `wasteType`).
-   - `reports`: Stores citizen/worker issue reports (`reportedBy`, `binId`, `type`, `status`, `description`).
-   - `routes`: Stores AI-generated collection route sequences (`bins`, `estimatedDistanceKm`, `assignedWorker`, `status`).
-
----
-
-## 📋 Master Credentials Directory
-
-All accounts below are verified and stored in your **MongoDB Atlas Cloud Database (`smart_waste_ai.users`)**:
-
-### 🏛️ 1. Main Municipal Admin
-- **Role**: `admin`
-- **Name**: `Municipal Admin`
-- **Email**: `admin@smartwaste.local`
-- **Password**: `Admin@SmartWaste2026`
-- **Portal Link**: [http://localhost:3000/admin](http://localhost:3000/admin) (or via `/citizen/login`)
-
-### 🚚 2. Municipal Workers
-- **Worker 1 (North Zone)**:
-  - **Role**: `worker` | **Name**: `Ramesh Kumar` | **Employee ID**: `MUN-1001`
-  - **Email**: `worker1@smartwaste.local` | **Password**: `Worker@SmartWaste2026`
-  - **Portal Link**: [http://localhost:3000/worker](http://localhost:3000/worker)
-- **Worker 2 (South Zone)**:
-  - **Role**: `worker` | **Name**: `Suresh Singh` | **Employee ID**: `MUN-1002`
-  - **Email**: `worker2@smartwaste.local` | **Password**: `Worker@SmartWaste2026`
-  - **Portal Link**: [http://localhost:3000/worker](http://localhost:3000/worker)
-
-### 👤 3. Registered Citizens
-- **Citizen 1**:
-  - **Role**: `citizen` | **Name**: `Praveen`
-  - **Email**: `praveen.iyu@gmail.com` | **Password**: `prachi`
-  - **Portal Link**: [http://localhost:3000/citizen/dashboard](http://localhost:3000/citizen/dashboard)
-- **Citizen 2**:
-  - **Role**: `citizen` | **Name**: `Raj`
-  - **Email**: `raj_1787383357570@example.com` | **Password**: `Password123`
-  - **Portal Link**: [http://localhost:3000/citizen/dashboard](http://localhost:3000/citizen/dashboard)
-
----
-
-## 🛠️ Verification & Execution Commands
-
-### 1. Run Automated Security Test Suite
-Tests 14 security scenarios (JWT tokens, password hashing, role matrix):
+### 2. Environment Setup
+Copy the environment template and set your credentials:
 ```bash
-node scripts/test-auth-security.js
+cp .env.local.example .env.local
 ```
 
-### 2. Verify MongoDB Atlas Cloud Documents
-Queries and verifies all users, workers, and bins in MongoDB Atlas:
-```bash
-node scripts/verify-atlas.js
+Ensure `.env.local` contains:
+```env
+MONGODB_URI=mongodb+srv://sangeetampec_db_user:Fv7RXbDFbWUEoNUa@aicluster.foew8y4.mongodb.net/smart_waste_ai?retryWrites=true&w=majority&appName=AIcluster
+JWT_SECRET=super-secret-jwt-key-smart-waste-ai-2026-secure
+NODE_ENV=development
 ```
 
-### 3. Build Production Webpack App
-```bash
-npm run build
-```
-
-### 4. Start Development Server
+### 3. Run Development Server
 ```bash
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🧪 Verification & Test Suites
+
+Execute any of the pre-configured standalone test suites:
+
+```bash
+# 1. Test All Microservices (Auth, AI/LLM, Brain Core):
+node scripts/test-all-microservices.js
+
+# 2. Deep MongoDB Atlas Database & Schema Model Audit:
+node scripts/deep-db-check.js
+
+# 3. Test RBAC Security & Authentication Matrix:
+node scripts/test-auth-security.js
+
+# 4. Production Webpack Build:
+npm run build
+```
+
+---
+
+## 👥 Verified Testing Credentials
+
+| Portal | Role | Email | Password | Dashboard URL |
+|---|:---:|---|---|---|
+| **Citizen** | `citizen` | `ry7437901@gmail.com` | `rajyadav123` | `/citizen/dashboard` |
+| **Worker** | `worker` | `worker1@smartwaste.local` | `Worker@SmartWaste2026` | `/worker` |
+| **Admin** | `admin` | `admin@smartwaste.local` | `Admin@SmartWaste2026` | `/admin` |
