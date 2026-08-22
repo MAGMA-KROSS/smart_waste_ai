@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { X, Plus, MapPin, Trash2, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
-import { WASTE_CATEGORIES } from "@/lib/mockBins";
+import { X, Plus, MapPin, Trash2, CheckCircle2, ShieldCheck, Sparkles, Loader2 } from "lucide-react";
 
 export default function AddBinModal({ userLocation, onAddBin = () => {}, onClose = () => {} }) {
   const [name, setName] = useState("");
@@ -12,18 +11,20 @@ export default function AddBinModal({ userLocation, onAddBin = () => {}, onClose
   const [suitableItems, setSuitableItems] = useState("PET Water Bottles, Aluminium Cans, Paper");
   const [lat, setLat] = useState(userLocation?.lat || 28.6215);
   const [lng, setLng] = useState(userLocation?.lng || 77.3640);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
       alert("Please enter a bin name.");
       return;
     }
 
+    setLoading(true);
     const itemsArray = suitableItems.split(",").map((s) => s.trim()).filter(Boolean);
 
-    const newBin = {
-      id: `BIN-CUSTOM-${Math.floor(100 + Math.random() * 900)}`,
+    const binData = {
+      binId: `BIN-CUSTOM-${Math.floor(100 + Math.random() * 900)}`,
       name: name.trim(),
       lat: parseFloat(lat),
       lng: parseFloat(lng),
@@ -38,8 +39,23 @@ export default function AddBinModal({ userLocation, onAddBin = () => {}, onClose
       sensorStatus: "Online",
     };
 
-    onAddBin(newBin);
-    onClose();
+    try {
+      const res = await fetch("/api/bins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(binData),
+      });
+
+      const data = await res.json();
+      const createdBin = data.bin || binData;
+      onAddBin(createdBin);
+    } catch (err) {
+      console.warn("Failed to persist bin to DB:", err);
+      onAddBin(binData);
+    } finally {
+      setLoading(false);
+      onClose();
+    }
   };
 
   return (
@@ -54,7 +70,7 @@ export default function AddBinModal({ userLocation, onAddBin = () => {}, onClose
             </div>
             <h2 className="text-xl font-bold mt-1.5">+ Add New Smart Dustbin</h2>
             <p className="text-xs text-emerald-100/90 mt-0.5">
-              Add a new dustbin location to the live map network.
+              Add a new dustbin location to the live map network & MongoDB Atlas.
             </p>
           </div>
           <button
@@ -181,10 +197,17 @@ export default function AddBinModal({ userLocation, onAddBin = () => {}, onClose
           <div className="pt-3 flex items-center gap-3 border-t border-slate-100">
             <button
               type="submit"
+              disabled={loading}
               className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-sm flex items-center justify-center space-x-1.5 transition-colors"
             >
-              <Plus className="h-4 w-4" />
-              <span>Add Dustbin to Map</span>
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  <span>Add Dustbin to Map & Database</span>
+                </>
+              )}
             </button>
             <button
               type="button"
