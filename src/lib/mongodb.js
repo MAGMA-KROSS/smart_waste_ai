@@ -3,9 +3,10 @@ import dns from "dns";
 import fs from "fs";
 import path from "path";
 
-// Fix DNS resolution order for macOS / Node ESM
+// Fix DNS resolution order & SRV lookup for Atlas in Node on Windows/macOS
 try {
   dns.setDefaultResultOrder("ipv4first");
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
 } catch {
   // Ignore if not supported
 }
