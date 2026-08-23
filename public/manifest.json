@@ -1,0 +1,86 @@
+{
+  "name": "SmartWaste AI — Intelligent Civic Waste Network",
+  "short_name": "SmartWaste AI",
+  "description": "AI-powered urban waste management, live smart-bin tracking, and circular economy platform.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B2E1F",
+  "theme_color": "#10B981",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "AI Waste Scanner",
+      "short_name": "Scan Waste",
+      "description": "Classify waste and get instant upcycling ideas",
+      "url": "/citizen/scan-waste",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Find Nearest Bins",
+      "short_name": "Find Bins",
+      "description": "Locate nearby smart dustbins on GIS map",
+      "url": "/citizen/find-bin",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Worker Shift Portal",
+      "short_name": "Worker Portal",
+      "description": "View assigned routes and verify collections",
+      "url": "/worker",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Admin Command Center",
+      "short_name": "Admin Portal",
+      "description": "City-wide analytics and route optimization",
+      "url": "/admin",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": ["utilities", "productivity", "sustainability", "government"],
+  "screenshots": []
+}
