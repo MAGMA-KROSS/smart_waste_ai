@@ -20,6 +20,16 @@ const ROUTE_RULES = [
     loginRedirect: "/citizen/login",
   },
   {
+    pattern: "/citizen/scan-waste",
+    allowedRoles: ["citizen", "worker", "admin"],
+    loginRedirect: "/citizen/login",
+  },
+  {
+    pattern: "/scan-waste",
+    allowedRoles: ["citizen", "worker", "admin"],
+    loginRedirect: "/citizen/login",
+  },
+  {
     pattern: "/worker",
     allowedRoles: ["worker", "admin"],
     loginRedirect: "/citizen/login",
@@ -82,6 +92,8 @@ function getDashboardForRole(role) {
 export const config = {
   matcher: [
     "/citizen/dashboard/:path*",
+    "/citizen/scan-waste/:path*",
+    "/scan-waste/:path*",
     "/worker/:path*",
     "/admin/:path*",
   ],

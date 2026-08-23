@@ -40,11 +40,20 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect based on role returned from server
+      // Redirect based on redirect parameter or user role
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const redirectParam = params?.get("redirect");
+
       const { role } = data.user;
-      if (role === "admin") router.push("/admin");
-      else if (role === "worker") router.push("/worker");
-      else router.push("/citizen/dashboard");
+      if (redirectParam && redirectParam.startsWith("/")) {
+        router.push(redirectParam);
+      } else if (role === "admin") {
+        router.push("/admin");
+      } else if (role === "worker") {
+        router.push("/worker");
+      } else {
+        router.push("/citizen/dashboard");
+      }
     } catch {
       setError("Network error. Please check your connection.");
     } finally {
