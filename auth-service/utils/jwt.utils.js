@@ -11,15 +11,10 @@
 
 import { SignJWT, jwtVerify } from "jose";
 
-// Lazily encode the secret so we don't crash at import-time in environments
-// where JWT_SECRET is not yet set (e.g., build step).
+const DEFAULT_SECRET = "smart_waste_ai_jwt_secret_key_development_2026_secure_token";
+
 function getSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error(
-      "JWT_SECRET environment variable is not set. Add it to .env.local"
-    );
-  }
+  const secret = process.env.JWT_SECRET || DEFAULT_SECRET;
   return new TextEncoder().encode(secret);
 }
 
