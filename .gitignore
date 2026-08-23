@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ml-service (Python) - never commit virtual envs, caches, or model weights
+ml-service/venv/
+ml-service/.venv/
+ml-service/**/__pycache__/
+ml-service/**/*.pyc
+ml-service/models/*.pt
+!ml-service/models/README.md
+
+# training artifacts / dataset images (large, regenerable)
+runs/
+dataset/train/**/*.jpg
+dataset/train/**/*.png
+dataset/val/**/*.jpg
+dataset/val/**/*.png
+dataset/test/**/*.jpg
+dataset/test/**/*.png
+!dataset/README.md
