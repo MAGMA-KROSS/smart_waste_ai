@@ -22,6 +22,8 @@ export const WASTE_CATEGORIES = [
   { classId: "metal", displayName: "Metal", emoji: "🔩", materialFamily: "aluminium", binCategory: "recyclable" },
 ];
 
+export const ALL_CLASS_IDS = WASTE_CATEGORIES.map((c) => c.classId);
+
 // Backward-compat bridge: the original ai-llm-service stub's
 // getRecyclingRecommendations(material) used 5 coarse "material family"
 // keys (aluminium, plastic, glass, organic, ewaste). Any existing/future

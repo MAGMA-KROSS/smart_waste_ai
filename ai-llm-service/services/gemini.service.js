@@ -9,7 +9,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { buildWasteRecommendationPrompt } from "../prompts/wastePrompts.js";
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 function isConfigured() {
   return Boolean(process.env.GEMINI_API_KEY);
@@ -55,7 +55,7 @@ export async function generateWasteRecommendations(verifiedWasteData) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
-      generationConfig: { responseMimeType: "application/json", temperature: 0.6, maxOutputTokens: 700 },
+      generationConfig: { responseMimeType: "application/json", temperature: 0.6, maxOutputTokens: 2048 },
     });
 
     const prompt = buildWasteRecommendationPrompt(verifiedWasteData);
