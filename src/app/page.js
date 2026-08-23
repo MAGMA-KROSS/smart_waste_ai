@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Recycle,
   Menu,
@@ -148,18 +149,18 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-8">
-            <a href="/home" className="text-sm font-medium text-brand-charcoal hover:text-brand-primary transition-colors">Home</a>
-            <a href="/citizen/find-bin" className="text-sm font-semibold text-brand-primary transition-colors">Find a Bin</a>
-            <a href="#ai-scanner" className="text-sm font-medium text-brand-slate hover:text-brand-primary transition-colors">AI Scanner</a>
-            <a href="#how-it-works" className="text-sm font-medium text-brand-slate hover:text-brand-primary transition-colors">How It Works</a>
+            <Link href="/" className="text-sm font-medium text-brand-charcoal hover:text-brand-primary transition-colors">Home</Link>
+            <Link href="/citizen/find-bin" className="text-sm font-semibold text-brand-primary transition-colors">Find a Bin</Link>
+            <Link href="/citizen/scan-waste" className="text-sm font-medium text-brand-slate hover:text-brand-primary transition-colors">AI Scanner</Link>
+            <Link href="#how-it-works" className="text-sm font-medium text-brand-slate hover:text-brand-primary transition-colors">How It Works</Link>
           </div>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <a href="/citizen/login" className="text-sm font-medium text-brand-slate hover:text-brand-charcoal transition-colors">Login</a>
-            <a href="/citizen/register" className="bg-brand-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-black transition-colors shadow-md">
+            <Link href="/citizen/login" className="text-sm font-medium text-brand-slate hover:text-brand-charcoal transition-colors">Login</Link>
+            <Link href="/citizen/register" className="bg-brand-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-black transition-colors shadow-md">
               Get Started
-            </a>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -175,13 +176,13 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg">
           <div className="px-4 pt-2 pb-6 space-y-1">
-            <a href="#" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-charcoal hover:bg-gray-50 rounded-md">Home</a>
-            <a href="#find-bin" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">Find a Bin</a>
-            <a href="#ai-scanner" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">AI Scanner</a>
-            <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">How It Works</a>
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-charcoal hover:bg-gray-50 rounded-md">Home</Link>
+            <Link href="/citizen/find-bin" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">Find a Bin</Link>
+            <Link href="/citizen/scan-waste" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">AI Scanner</Link>
+            <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-brand-slate hover:bg-gray-50 rounded-md">How It Works</Link>
             <div className="pt-4 flex flex-col space-y-3">
-              <a href="/citizen/login" onClick ={() => setIsMobileMenuOpen(false)}className="block w-full text-center px-4 py-3 border border-gray-300 rounded-lg text-brand-charcoal font-medium hover:bg-gray-50">Login</a>
-              <a href="/citizen/register" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center px-4 py-3 bg-brand-dark text-white rounded-lg font-medium hover:bg-black">Get Started</a>
+              <Link href="/citizen/login" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center px-4 py-3 border border-gray-300 rounded-lg text-brand-charcoal font-medium hover:bg-gray-50">Login</Link>
+              <Link href="/citizen/register" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center px-4 py-3 bg-brand-dark text-white rounded-lg font-medium hover:bg-black">Get Started</Link>
             </div>
           </div>
         </div>
@@ -213,12 +214,12 @@ const Hero = () => (
           </p>
           
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-            <a href="/citizen/find-bin" className="flex items-center justify-center bg-brand-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-brand-secondary transition-all shadow-brand-primary-glow hover:-translate-y-1">
+            <Link href="/citizen/find-bin" className="flex items-center justify-center bg-brand-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-brand-secondary transition-all shadow-brand-primary-glow hover:-translate-y-1">
               <MapPin className="mr-2" size={20} /> Find a Nearby Bin
-            </a>
-            <a href="/citizen/find-bin" className="flex items-center justify-center bg-white text-brand-charcoal border border-gray-200 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm hover:-translate-y-1">
-              <Scan className="mr-2" size={20} /> Try Interactive Map
-            </a>
+            </Link>
+            <Link href="/citizen/scan-waste" className="flex items-center justify-center bg-white text-brand-charcoal border border-gray-200 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm hover:-translate-y-1">
+              <Scan className="mr-2" size={20} /> Scan Your Waste
+            </Link>
           </div>
         </div>
 
@@ -403,9 +404,9 @@ const Features = () => (
           </div>
           <h3 className="text-lg font-bold text-brand-dark mb-3">Find Nearby Bins</h3>
           <p className="text-sm text-brand-slate mb-6 line-clamp-3">Locate the nearest suitable waste bin using your live location. Filter by general, recyclable, or hazardous waste.</p>
-          <a href="#" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
+          <Link href="/citizen/find-bin" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
             Explore Map <ArrowRight size={16} className="ml-1" />
-          </a>
+          </Link>
         </div>
 
         {/* Feature 2 */}
@@ -415,9 +416,9 @@ const Features = () => (
           </div>
           <h3 className="text-lg font-bold text-brand-dark mb-3">AI Waste Scanner</h3>
           <p className="text-sm text-brand-slate mb-6 line-clamp-3">Identify waste instantly using your camera. Discover the correct category and proper way to dispose of it.</p>
-          <a href="#ai-scanner" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
+          <Link href="/citizen/scan-waste" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
             Scan Waste <ArrowRight size={16} className="ml-1" />
-          </a>
+          </Link>
         </div>
 
         {/* Feature 3 */}
@@ -427,9 +428,9 @@ const Features = () => (
           </div>
           <h3 className="text-lg font-bold text-brand-dark mb-3">Recycle & Reuse</h3>
           <p className="text-sm text-brand-slate mb-6 line-clamp-3">Discover practical recycling, reuse, and safe upcycling ideas for everyday waste items you scan.</p>
-          <a href="#" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
+          <Link href="/citizen/scan-waste" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
             Explore Ideas <ArrowRight size={16} className="ml-1" />
-          </a>
+          </Link>
         </div>
 
         {/* Feature 4 */}
@@ -439,9 +440,9 @@ const Features = () => (
           </div>
           <h3 className="text-lg font-bold text-brand-dark mb-3">Report & Improve</h3>
           <p className="text-sm text-brand-slate mb-6 line-clamp-3">Help your community by reporting overflowing, damaged, or missing bins directly to city authorities.</p>
-          <a href="#" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
+          <Link href="/citizen/find-bin" className="text-brand-primary font-semibold text-sm flex items-center group-hover:text-brand-secondary">
             Report Issue <ArrowRight size={16} className="ml-1" />
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -521,9 +522,9 @@ const ScannerShowcase = () => (
             </div>
           </div>
 
-          <a href="#" className="inline-flex items-center font-semibold text-brand-primary hover:text-brand-secondary text-lg group">
+          <Link href="/citizen/scan-waste" className="inline-flex items-center font-semibold text-brand-primary hover:text-brand-secondary text-lg group">
             Try AI Scanner <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -573,9 +574,9 @@ const MapShowcase = () => (
             </div>
           </div>
           
-          <a href="#" className="text-gray-400 hover:text-white text-sm font-medium flex items-center">
+          <Link href="/citizen/find-bin" className="text-gray-400 hover:text-white text-sm font-medium flex items-center">
             View all nearby bins <ArrowRight size={16} className="ml-1" />
-          </a>
+          </Link>
         </div>
 
         <div className="order-1 lg:order-2 w-full h-[400px] lg:h-[500px] bg-[#1a1a2e] rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
@@ -887,12 +888,12 @@ const CTASection = () => (
       </p>
       
       <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-        <a href="#/find-bin" className="bg-brand-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-brand-secondary transition-all shadow-lg hover:-translate-y-1">
+        <Link href="/citizen/find-bin" className="bg-brand-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-brand-secondary transition-all shadow-lg hover:-translate-y-1">
           Find a Nearby Bin
-        </a>
-        <a href="#ai-scanner" className="bg-white/10 text-white border border-white/20 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all backdrop-blur-sm hover:-translate-y-1">
+        </Link>
+        <Link href="/citizen/scan-waste" className="bg-white/10 text-white border border-white/20 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all backdrop-blur-sm hover:-translate-y-1">
           Scan Your Waste
-        </a>
+        </Link>
       </div>
     </div>
   </section>
@@ -911,9 +912,9 @@ const Footer = () => (
           </div>
           <p className="text-sm text-brand-slate mb-6 max-w-xs">Smarter Waste. Cleaner Cities. Connecting citizens, infrastructure, and intelligence.</p>
           <div className="flex space-x-4">
-            <a href="#" className="text-gray-400 hover:text-brand-primary transition-colors"><FaTwitter size={20} /></a>
-            <a href="#" className="text-gray-400 hover:text-brand-primary transition-colors"><FaLinkedin size={20} /></a>
-            <a href="#" className="text-gray-400 hover:text-brand-primary transition-colors"><FaGithub size={20} /></a>
+            <Link href="#" className="text-gray-400 hover:text-brand-primary transition-colors"><FaTwitter size={20} /></Link>
+            <Link href="#" className="text-gray-400 hover:text-brand-primary transition-colors"><FaLinkedin size={20} /></Link>
+            <Link href="#" className="text-gray-400 hover:text-brand-primary transition-colors"><FaGithub size={20} /></Link>
           </div>
         </div>
 
@@ -921,7 +922,7 @@ const Footer = () => (
           <h4 className="font-semibold text-brand-dark mb-4">Product</h4>
           <ul className="space-y-3 text-sm text-brand-slate">
             {['Find a Bin', 'AI Scanner', 'Recycling Guides', 'Report Issues'].map(link => (
-              <li key={link}><a href="#" className="hover:text-brand-primary transition-colors">{link}</a></li>
+              <li key={link}><Link href="#" className="hover:text-brand-primary transition-colors">{link}</Link></li>
             ))}
           </ul>
         </div>
@@ -930,7 +931,7 @@ const Footer = () => (
           <h4 className="font-semibold text-brand-dark mb-4">Platform</h4>
           <ul className="space-y-3 text-sm text-brand-slate">
             {['Citizen App', 'Driver Dashboard', 'Municipality Portal', 'API Access'].map(link => (
-              <li key={link}><a href="#" className="hover:text-brand-primary transition-colors">{link}</a></li>
+              <li key={link}><Link href="#" className="hover:text-brand-primary transition-colors">{link}</Link></li>
             ))}
           </ul>
         </div>
@@ -939,7 +940,7 @@ const Footer = () => (
           <h4 className="font-semibold text-brand-dark mb-4">Company</h4>
           <ul className="space-y-3 text-sm text-brand-slate">
             {['About Us', 'Contact', 'Privacy Policy', 'Terms of Service'].map(link => (
-              <li key={link}><a href="#" className="hover:text-brand-primary transition-colors">{link}</a></li>
+              <li key={link}><Link href="#" className="hover:text-brand-primary transition-colors">{link}</Link></li>
             ))}
           </ul>
         </div>
