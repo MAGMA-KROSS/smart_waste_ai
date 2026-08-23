@@ -32,7 +32,15 @@ export default function FindBinPage() {
   const [bins, setBins] = useState(MOCK_BINS);
   const [userLocation, setUserLocation] = useState(INITIAL_USER_LOCATION);
   const [selectedBin, setSelectedBin] = useState(null);
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState(() => {
+    // Pre-select a category when arriving from the AI Scanner's "Find
+    // Nearest Suitable Bin" button (?category=recyclable etc.). Read once
+    // via a lazy initializer (client-only guard) rather than an effect,
+    // so no post-mount setState/re-render is needed for this.
+    if (typeof window === "undefined") return "all";
+    const category = new URLSearchParams(window.location.search).get("category");
+    return category && category !== "all" ? category : "all";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [directionsBin, setDirectionsBin] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'available', 'full'

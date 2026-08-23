@@ -8,7 +8,7 @@ export default function Navbar({ activePage = "find-bin" }) {
 
   const navItems = [
     { id: "find-bin", label: "Find Nearby Bins", href: "/citizen/find-bin", icon: MapPin },
-    { id: "scan", label: "AI Scanner", href: "#", icon: Scan, tag: "Soon" },
+    { id: "scan", label: "AI Scanner", href: "/citizen/scan-waste", icon: Scan },
     { id: "recycle", label: "Recycling Guide", href: "#", icon: Leaf, tag: "Soon" },
     { id: "report", label: "Report Issue", href: "#", icon: AlertCircle, tag: "Soon" },
   ];
